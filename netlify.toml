@@ -1,11 +1,10 @@
 [build]
-command = "corepack enable pnpm && pnpm install --frozen-lockfile && pnpm --filter n8n-editor-ui exec cross-env VUE_APP_PUBLIC_PATH=\"/\" NODE_OPTIONS=\"--max-old-space-size=8192\" vite build"
+command = "corepack enable pnpm && pnpm install --frozen-lockfile && pnpm --filter @n8n/vitest-config build && pnpm --filter n8n-editor-ui exec cross-env VUE_APP_PUBLIC_PATH=\"/\" NODE_OPTIONS=\"--max-old-space-size=8192\" vite build"
 publish = "packages/frontend/editor-ui/dist"
 
 [build.environment]
 NODE_VERSION = "22.16.0"
 PNPM_VERSION = "10.16.1"
-VUE_APP_URL_BASE_API = "https://astonishing-gingersnap-9190cf.netlify.app/"
 
 [[redirects]]
 from = "/*"

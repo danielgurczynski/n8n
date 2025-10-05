@@ -29,35 +29,39 @@ const alias = [
 	// Ensure bare imports resolve to sources (not dist)
 	{ find: '@n8n/i18n', replacement: resolve(packagesDir, 'frontend', '@n8n', 'i18n', 'src') },
 	{
-		find: /^@n8n\/chat(.+)$/,
+		find: /^@n8n\/chat(.*)$/,
 		replacement: resolve(packagesDir, 'frontend', '@n8n', 'chat', 'src$1'),
 	},
 	{
-		find: /^@n8n\/api-requests(.+)$/,
+		find: /^@n8n\/api-requests(.*)$/,
 		replacement: resolve(packagesDir, 'frontend', '@n8n', 'api-requests', 'src$1'),
 	},
 	{
-		find: /^@n8n\/composables(.+)$/,
+		find: /^@n8n\/composables(.*)$/,
 		replacement: resolve(packagesDir, 'frontend', '@n8n', 'composables', 'src$1'),
 	},
 	{
-		find: /^@n8n\/constants(.+)$/,
+		find: /^@n8n\/constants(.*)$/,
 		replacement: resolve(packagesDir, '@n8n', 'constants', 'src$1'),
 	},
 	{
-		find: /^@n8n\/design-system(.+)$/,
+		find: /^@n8n\/design-system(.*)$/,
 		replacement: resolve(packagesDir, 'frontend', '@n8n', 'design-system', 'src$1'),
 	},
 	{
-		find: /^@n8n\/i18n(.+)$/,
+		find: /^@n8n\/i18n(.*)$/,
 		replacement: resolve(packagesDir, 'frontend', '@n8n', 'i18n', 'src$1'),
 	},
 	{
-		find: /^@n8n\/stores(.+)$/,
+		find: /^@n8n\/stores(.*)$/,
 		replacement: resolve(packagesDir, 'frontend', '@n8n', 'stores', 'src$1'),
 	},
 	{
-		find: /^@n8n\/utils(.+)$/,
+		find: /^@n8n\/rest-api-client(.*)$/,
+		replacement: resolve(packagesDir, 'frontend', '@n8n', 'rest-api-client', 'src$1'),
+	},
+	{
+		find: /^@n8n\/utils(.*)$/,
 		replacement: resolve(packagesDir, '@n8n', 'utils', 'src$1'),
 	},
 	...['orderBy', 'camelCase', 'cloneDeep', 'startCase'].map((name) => ({
@@ -224,3 +228,4 @@ export default mergeConfig(
 	}),
 	vitestConfig,
 );
+
