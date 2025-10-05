@@ -5,6 +5,7 @@ publish = "packages/frontend/editor-ui/dist"
 [build.environment]
 NODE_VERSION = "22.16.0"
 PNPM_VERSION = "10.16.1"
+VUE_APP_URL_BASE_API = "https://astonishing-gingersnap-9190cf.netlify.app/"
 
 [[redirects]]
 from = "/*"
