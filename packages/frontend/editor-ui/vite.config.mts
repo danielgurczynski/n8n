@@ -1,4 +1,5 @@
 import vue from '@vitejs/plugin-vue';
+import { Buffer } from 'node:buffer';
 import { posix as pathPosix, resolve, sep as pathSep } from 'path';
 import { defineConfig, mergeConfig, type UserConfig } from 'vite';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
@@ -18,8 +19,29 @@ import { nodePopularityPlugin } from './vite/vite-plugin-node-popularity.mjs';
 const publicPath = process.env.VUE_APP_PUBLIC_PATH || '/';
 
 const { NODE_ENV } = process.env;
+const restEndpoint = process.env.N8N_REST_ENDPOINT ?? 'rest';
+const sentryDsn = process.env.N8N_SENTRY_DSN;
 
 const browsers = browserslist.loadConfig({ path: process.cwd() });
+
+const getConfigMetaTags = () => {
+	const tags: string[] = [];
+
+	const restEndpointEncoded = Buffer.from(restEndpoint).toString('base64');
+	tags.push(`<meta name="n8n:config:rest-endpoint" content="${restEndpointEncoded}">`);
+
+	if (sentryDsn) {
+		const sentryConfig = {
+			dsn: sentryDsn,
+			environment: process.env.N8N_SENTRY_ENVIRONMENT ?? 'production',
+			serverName: process.env.N8N_SENTRY_SERVER_NAME ?? undefined,
+			release: process.env.N8N_SENTRY_RELEASE ?? undefined,
+		};
+		tags.push(`<meta name="n8n:config:sentry" content="${Buffer.from(JSON.stringify(sentryConfig)).toString('base64')}">`);
+	}
+
+	return tags.join('');
+};
 
 const packagesDir = resolve(__dirname, '..', '..');
 
@@ -141,14 +163,13 @@ const plugins: UserConfig['plugins'] = [
 	{
 		name: 'Insert config script',
 		transformIndexHtml: (html, ctx) => {
-			// Skip config tags when using Vite dev server. Otherwise the BE
-			// will replace it with the actual config script in cli/src/commands/start.ts.
-			return ctx.server
-				? html
-						.replace('%CONFIG_TAGS%', '')
-						.replaceAll('/{{BASE_PATH}}', '//localhost:5678')
-						.replaceAll('/{{REST_ENDPOINT}}', '/rest')
-				: html;
+			const replaced = html.replace('%CONFIG_TAGS%', ctx.server ? '' : getConfigMetaTags());
+			if (ctx.server) {
+				return replaced
+					.replaceAll('/{{BASE_PATH}}', '//localhost:5678')
+					.replaceAll('/{{REST_ENDPOINT}}', '/rest');
+			}
+			return replaced;
 		},
 	},
 	// For sanitize-html

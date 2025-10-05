@@ -17,10 +17,11 @@ import type { IDataObject, WorkflowSettings } from 'n8n-workflow';
 import { defineStore } from 'pinia';
 import { useRootStore } from '@n8n/stores/useRootStore';
 import { makeRestApiRequest } from '@n8n/rest-api-client';
+import { createDefaultFrontendSettings } from '@/constants/frontendDefaults';
 
 export const useSettingsStore = defineStore(STORES.SETTINGS, () => {
 	const initialized = ref(false);
-	const settings = ref<FrontendSettings>({} as FrontendSettings);
+	const settings = ref<FrontendSettings>(createDefaultFrontendSettings());
 	const moduleSettings = ref<FrontendModuleSettings>({});
 	const userManagement = ref<IUserManagementSettings>({
 		quota: -1,
@@ -220,43 +221,48 @@ export const useSettingsStore = defineStore(STORES.SETTINGS, () => {
 		saveDataProgressExecution.value = newValue;
 	};
 
+	const applySettings = (newSettings: FrontendSettings) => {
+		const rootStore = useRootStore();
+
+		setSettings(newSettings);
+		settings.value.communityNodesEnabled = newSettings.communityNodesEnabled;
+		settings.value.unverifiedCommunityNodesEnabled = newSettings.unverifiedCommunityNodesEnabled;
+		setAllowedModules(newSettings.allowedModules);
+		setSaveDataErrorExecution(newSettings.saveDataErrorExecution);
+		setSaveDataSuccessExecution(newSettings.saveDataSuccessExecution);
+		setSaveDataProgressExecution(newSettings.saveExecutionProgress);
+		setSaveManualExecutions(newSettings.saveManualExecutions);
+
+		isMFAEnforced.value = newSettings.mfa?.enforced ?? false;
+
+		rootStore.setUrlBaseWebhook(newSettings.urlBaseWebhook);
+		rootStore.setUrlBaseEditor(newSettings.urlBaseEditor);
+		rootStore.setEndpointForm(newSettings.endpointForm);
+		rootStore.setEndpointFormTest(newSettings.endpointFormTest);
+		rootStore.setEndpointFormWaiting(newSettings.endpointFormWaiting);
+		rootStore.setEndpointWebhook(newSettings.endpointWebhook);
+		rootStore.setEndpointWebhookTest(newSettings.endpointWebhookTest);
+		rootStore.setEndpointWebhookWaiting(newSettings.endpointWebhookWaiting);
+		rootStore.setEndpointMcp(newSettings.endpointMcp);
+		rootStore.setEndpointMcpTest(newSettings.endpointMcpTest);
+		rootStore.setTimezone(newSettings.timezone);
+		rootStore.setExecutionTimeout(newSettings.executionTimeout);
+		rootStore.setMaxExecutionTimeout(newSettings.maxExecutionTimeout);
+		rootStore.setInstanceId(newSettings.instanceId);
+		rootStore.setOauthCallbackUrls(newSettings.oauthCallbackUrls);
+		rootStore.setN8nMetadata(newSettings.n8nMetadata || {});
+		rootStore.setDefaultLocale(newSettings.defaultLocale);
+		rootStore.setBinaryDataMode(newSettings.binaryDataMode);
+
+		if (newSettings.telemetry.enabled) {
+			void eventsApi.sessionStarted(rootStore.restApiContext);
+		}
+	};
+
 	const getSettings = async () => {
 		const rootStore = useRootStore();
 		const fetchedSettings = await settingsApi.getSettings(rootStore.restApiContext);
-		setSettings(fetchedSettings);
-		settings.value.communityNodesEnabled = fetchedSettings.communityNodesEnabled;
-		settings.value.unverifiedCommunityNodesEnabled =
-			fetchedSettings.unverifiedCommunityNodesEnabled;
-		setAllowedModules(fetchedSettings.allowedModules);
-		setSaveDataErrorExecution(fetchedSettings.saveDataErrorExecution);
-		setSaveDataSuccessExecution(fetchedSettings.saveDataSuccessExecution);
-		setSaveDataProgressExecution(fetchedSettings.saveExecutionProgress);
-		setSaveManualExecutions(fetchedSettings.saveManualExecutions);
-
-		isMFAEnforced.value = settings.value.mfa?.enforced ?? false;
-
-		rootStore.setUrlBaseWebhook(fetchedSettings.urlBaseWebhook);
-		rootStore.setUrlBaseEditor(fetchedSettings.urlBaseEditor);
-		rootStore.setEndpointForm(fetchedSettings.endpointForm);
-		rootStore.setEndpointFormTest(fetchedSettings.endpointFormTest);
-		rootStore.setEndpointFormWaiting(fetchedSettings.endpointFormWaiting);
-		rootStore.setEndpointWebhook(fetchedSettings.endpointWebhook);
-		rootStore.setEndpointWebhookTest(fetchedSettings.endpointWebhookTest);
-		rootStore.setEndpointWebhookWaiting(fetchedSettings.endpointWebhookWaiting);
-		rootStore.setEndpointMcp(fetchedSettings.endpointMcp);
-		rootStore.setEndpointMcpTest(fetchedSettings.endpointMcpTest);
-		rootStore.setTimezone(fetchedSettings.timezone);
-		rootStore.setExecutionTimeout(fetchedSettings.executionTimeout);
-		rootStore.setMaxExecutionTimeout(fetchedSettings.maxExecutionTimeout);
-		rootStore.setInstanceId(fetchedSettings.instanceId);
-		rootStore.setOauthCallbackUrls(fetchedSettings.oauthCallbackUrls);
-		rootStore.setN8nMetadata(fetchedSettings.n8nMetadata || {});
-		rootStore.setDefaultLocale(fetchedSettings.defaultLocale);
-		rootStore.setBinaryDataMode(fetchedSettings.binaryDataMode);
-
-		if (fetchedSettings.telemetry.enabled) {
-			void eventsApi.sessionStarted(rootStore.restApiContext);
-		}
+		applySettings(fetchedSettings);
 	};
 
 	const initialize = async () => {
@@ -264,7 +270,12 @@ export const useSettingsStore = defineStore(STORES.SETTINGS, () => {
 			return;
 		}
 
-		await getSettings();
+		try {
+			await getSettings();
+		} catch (error) {
+			console.error('Failed to load settings from API, falling back to defaults.', error);
+			applySettings(createDefaultFrontendSettings());
+		}
 
 		initialized.value = true;
 	};
@@ -295,7 +306,7 @@ export const useSettingsStore = defineStore(STORES.SETTINGS, () => {
 	};
 
 	const reset = () => {
-		settings.value = {} as FrontendSettings;
+		settings.value = createDefaultFrontendSettings();
 	};
 
 	const getModuleSettings = async () => {
