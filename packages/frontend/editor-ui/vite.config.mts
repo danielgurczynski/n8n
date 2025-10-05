@@ -64,6 +64,10 @@ const alias = [
 		find: /^@n8n\/utils(.*)$/,
 		replacement: resolve(packagesDir, '@n8n', 'utils', 'src$1'),
 	},
+	{
+		find: /^n8n-workflow(.*)$/,
+		replacement: resolve(packagesDir, 'workflow', 'src'),
+	},
 	...['orderBy', 'camelCase', 'cloneDeep', 'startCase'].map((name) => ({
 		find: new RegExp(`^lodash.${name}$`, 'i'),
 		replacement: `lodash/${name}`,
